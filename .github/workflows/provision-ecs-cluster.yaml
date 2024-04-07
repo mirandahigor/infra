@@ -1,0 +1,31 @@
+name: Create ECS Cluster
+
+on:
+issues:
+types:
+- opened
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Create ECS Cluster
+      run: |
+        aws ecs create-cluster --cluster-name my-ecs-cluster
+        aws ecs create-service --cluster my-ecs-cluster --service-name my-ecs-service --task-definition my-ecs-task-definition --desired-count 1
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+      -name: Run Terraform
+        run: |
+          cd terraform
+          terraform init
+          terraform apply -auto-approve 
+          
