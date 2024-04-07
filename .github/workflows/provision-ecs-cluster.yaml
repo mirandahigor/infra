@@ -1,9 +1,9 @@
 name: Create ECS Cluster
 
 on:
-issues:
-types:
-- opened
+  issues:
+    types:
+    - opened
 
 jobs:
   deploy:
@@ -19,13 +19,15 @@ jobs:
         aws ecs create-service --cluster my-ecs-cluster --service-name my-ecs-service --task-definition my-ecs-task-definition --desired-count 1
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
+        AWS_REGION: us-east-1
 
-      -name: Run Terraform
-        run: |
-          cd terraform
-          terraform init
-          terraform apply -auto-approve 
-          
+    - name: Run Terraform
+      run: |
+        cd terraform
+        terraform init
+        terraform apply -auto-approve
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: us-east-1
