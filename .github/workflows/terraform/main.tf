@@ -2,54 +2,57 @@ provider "aws" {
   region = "us-east-1"
 }
 
-resource "aws_ecs_cluster" "my_cluster" {
-  name = "my_cluster"
+resource "aws_vpc" "my_vpc" {
+  cidr_block = "10.0.0.0/16"
+  tags = {
+    Name = "My VPC"
+  }
+}
+
+resource "aws_subnet" "my_subnet" {
+  vpc_id     = aws_vpc.my_vpc.id
+  cidr_block = "10.0.1.0/24"
+  tags = {
+    Name = "My Subnet"
+  }
+}
+
+resource "aws_security_group" "my_security_group" {
+  name_prefix = "my-security-group"
+  vpc_id      = aws_vpc.my_vpc.id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}data "template_file" "my_task_definition" {
+  template = file("${path.module}/task_definition.json")
+
+  vars = {
+    image_name = "my-image-name"
+    port       = "80"
+  }
+}
+
+resource "aws_ecs_task_definition" "my_task_definition" {
+  family                   = "my-task-definition"
+  container_definitions    = data.template_file.my_task_definition.rendered
+  requires_compatibilities = ["FARGATE"]
 }
 
 resource "aws_ecs_service" "my_service" {
-  name            = "my_service"
-  cluster         = aws_ecs_cluster.my_cluster.id
+  name            = "My Service"
+  cluster         = aws_ecs_cluster.my_cluster.arn
   task_definition = aws_ecs_task_definition.my_task_definition.arn
   desired_count   = 1
   launch_type     = "FARGATE"
-  depends_on      = [aws_ecs_task_definition.my_task_definition]
 
   network_configuration {
     subnets          = [aws_subnet.my_subnet.id]
     security_groups  = [aws_security_group.my_security_group.id]
     assign_public_ip = true
   }
-
-  load_balancer {
-    target_group_arn = aws_lb_target_group.my_target_group.arn
-    container_name   = "my_container"
-    container_port   = 80
-  }
 }
-
-resource "aws_ecs_task_definition" "my_task_definition" {
-  family                = "my_task_definition"
-  network_mode          = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                   = "256"
-  memory                = "512"
-  execution_role_arn    = aws_iam_role.ecs_task_execution_role.arn
-
-  container_definitions = jsonencode([{
-    name      = "my_container"
-    image     = "nginx:latest"
-    cpu       = 256
-    memory    = 512
-    portMappings = [{
-      containerPort = 80
-      hostPort      = 80
-      protocol      = "tcp"
-    }]
-  }])
-}
-
-
-
-
-
 
