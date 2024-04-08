@@ -1,0 +1,13 @@
+
+"family": "my-ecs-task-definition",
+"networkMode": "bridge",
+"containerDefinitions": [
+  {
+    "name": "my-container",
+    "image": "my-docker-image",
+    "cpu": 10,
+    "memory": 10,
+    "essential": true
+  }
+]
+}
